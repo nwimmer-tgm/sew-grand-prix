@@ -4,11 +4,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
-public class Coordinator {
+public class GrandPrix {
 
     public static void main(String[] args) {
-        final Coordinator coordinator = new Coordinator(3);
-        coordinator.startCompetition();
+        final GrandPrix grandPrix = new GrandPrix(3);
+        grandPrix.startCompetition();
     }
 
     /**
@@ -24,7 +24,7 @@ public class Coordinator {
     private final int runnerCount;
     private int runnersFinished;
 
-    public Coordinator(final int runnerCount) {
+    public GrandPrix(final int runnerCount) {
         this.runnerCount = runnerCount;
         this.updateQueue = new ArrayBlockingQueue<>(runnerCount);
         this.startSignalLatch = new CountDownLatch(1);
