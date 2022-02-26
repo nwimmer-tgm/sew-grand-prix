@@ -6,7 +6,7 @@ package at.ac.tgm.hit.nwimmer.sew.threading.grandprix.runner;
  * @author Niklas Wimmer
  * @since 2022-02-24
  */
-public record RunnerEvent(EventType type, int round, long timeBetweenUpdates) {
+public record RunnerEvent(EventType type, long timeBetweenUpdates) {
 
     /**
      * The type of event which occurred.

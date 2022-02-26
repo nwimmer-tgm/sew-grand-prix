@@ -1,6 +1,5 @@
 package at.ac.tgm.hit.nwimmer.sew.threading.grandprix.runner;
 
-import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.Coordinator;
 import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.SleepTimeProvider;
 
 import java.util.concurrent.CountDownLatch;
@@ -33,14 +32,18 @@ public class Runner implements Runnable {
         try {
             latch.await();
 
-            updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.READY, 0, -1));
+            updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.READY, -1));
 
-            for (int currentRound = 1; currentRound <= Coordinator.roundCount; ++currentRound) {
+            while (true) {
                 final int sleepTime = this.sleepTimeProvider.retrieveNextSleepTime(name);
+
+                if (sleepTime < 0) {
+                    break;
+                }
 
                 final long time = System.currentTimeMillis();
                 Thread.sleep(sleepTime);
-                updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.ROUND_COMPLETED, currentRound, System.currentTimeMillis() - time));
+                updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.ROUND_COMPLETED, System.currentTimeMillis() - time));
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

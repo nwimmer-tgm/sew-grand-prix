@@ -7,5 +7,5 @@ package at.ac.tgm.hit.nwimmer.sew.threading.grandprix.communication.messages;
  * @author Niklas Wimmer
  * @since 2022-02-26
  */
-public sealed interface Message permits RoundCompletedMessage, RunnerReadyMessage {
+public sealed interface Message permits GrandPrixStartMessage, GrandPrixEndMessage, RunnerReadyMessage, RoundCompletedMessage, RunnerFinishedMessage {
 }
