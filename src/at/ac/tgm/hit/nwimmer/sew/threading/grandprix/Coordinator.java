@@ -1,31 +1,46 @@
 package at.ac.tgm.hit.nwimmer.sew.threading.grandprix;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.communication.MessageBroker;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.communication.messages.Message;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.communication.messages.RoundCompletedMessage;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.communication.messages.RunnerReadyMessage;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.runner.Runner;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.runner.RunnerEventManager;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.runner.EventDispatcher;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.SleepTimeManager;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.SleepTimeProvider;
+
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadLocalRandom;
 
-public class Coordinator implements UpdateProcessor {
+public class Coordinator {
 
-    private static final int runnerCount = 3;
-    private static final int roundCount = 3;
+    public static final int runnerCount = 3;
+    public static final int roundCount = 3;
 
-    private final BlockingQueue<UpdateInformation> updateQueue;
+    private final MessageBroker broker;
+
     private final CountDownLatch startSignalLatch;
     private int runnersFinished;
 
     public Coordinator() {
-        this.updateQueue = new ArrayBlockingQueue<>(runnerCount);
+        this.broker = new MessageBroker(runnerCount);
         this.startSignalLatch = new CountDownLatch(1);
 
+        this.setupRunners();
+
+        System.out.println("Die Läufer sind bereit...");
+    }
+
+    private void setupRunners() {
+        final SleepTimeProvider sleepTimeProvider = new SleepTimeManager();
+        final EventDispatcher updateDispatcher = new RunnerEventManager(this.broker);
+
         for (int i = 0; i < runnerCount; i++) {
-            final Runner runner = new Runner(this.startSignalLatch, this);
+            final Runner runner = new Runner(this.startSignalLatch, updateDispatcher, sleepTimeProvider);
             final Thread thread = new Thread(runner);
 
             thread.start();
         }
-
-        System.out.println("Die Läufer sind bereit...");
     }
 
     public void startCompetition() {
@@ -35,14 +50,17 @@ public class Coordinator implements UpdateProcessor {
 
         while (runnersFinished < runnerCount) {
             try {
-                final UpdateInformation update = this.updateQueue.take();
+                final Message message = this.broker.take();
 
-                switch (update.type()) {
-                    case READY -> System.out.println("Thread %s is ready!".formatted(update.runnerName()));
-                    case ROUND_COMPLETED -> {
-                        String output = "Thread %s hat Runde %s nach %sms abgeschlossen!".formatted(update.runnerName(), update.round(), update.timeBetweenUpdates());
+                switch (message) {
+                    case RunnerReadyMessage readyMsg -> System.out.println("Thread %s is ready!".formatted(readyMsg.runnerName()));
+                    case RoundCompletedMessage roundCompletedMsg -> {
+                        String output = "Thread %s hat Runde %s nach %sms abgeschlossen!".formatted(
+                                roundCompletedMsg.runnerName(),
+                                roundCompletedMsg.roundNumber(),
+                                roundCompletedMsg.roundTime());
 
-                        if (update.round() == roundCount) {
+                        if (roundCompletedMsg.roundNumber() == roundCount) {
                             output += " Platz %s!".formatted(++runnersFinished);
                         }
 
@@ -52,16 +70,6 @@ public class Coordinator implements UpdateProcessor {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    @Override
-    public int processUpdateAndGetNextSleepTime(UpdateInformation update) {
-        this.updateQueue.offer(update);
-        if (update.round() < roundCount) {
-            return ThreadLocalRandom.current().nextInt(5000, 10000);
-        } else {
-            return -1;
         }
     }
 }
