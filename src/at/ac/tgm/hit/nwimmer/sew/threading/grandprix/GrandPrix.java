@@ -13,6 +13,8 @@ import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Ein Grand Prix zwischen 3 verschiedenen Läufern, über 3 Runden hinweg. Die Läufer müssen in jeder Runde einen
@@ -84,10 +86,7 @@ public class GrandPrix {
         final TaskProvider taskProvider = new TaskManager(runnerStateManager, defaultTaskFactories);
 
         for (int i = 0; i < runnerCount; i++) {
-            final Runner runner = new Runner(this.startRunnersLatch, runnerStateManager, taskProvider);
-            final Thread thread = new Thread(runner, "Runner-" + i);
-
-            thread.start();
+            RunnerThreadFactory.newRunnerThread(this.startRunnersLatch, runnerStateManager, taskProvider).start();
         }
     }
 

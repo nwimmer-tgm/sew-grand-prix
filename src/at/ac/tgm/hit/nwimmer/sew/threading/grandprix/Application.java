@@ -20,23 +20,23 @@ public class Application {
     public static void printMessage(final Message message) {
         switch (message) {
             case GrandPrixStartMessage startMsg -> System.out.printf(
-                    "Grand Prix started at %s with %s runners and %s rounds to complete.%n",
+                    "Grand Prix gestartet um %s mit %s Läufern, welche %s Runden absolvieren müssen.%n",
                     dateTimeFormatter.format(startMsg.startTime()),
                     startMsg.runnerCount(),
                     startMsg.roundCount());
             case GrandPrixEndMessage endMsg -> System.out.printf(
-                    "Grand Prix ended at %s.%n",
+                    "Grand Prix abgeschlossen um %s.%n",
                     dateTimeFormatter.format(endMsg.endTime()));
             case RunnerReadyMessage readyMsg -> System.out.printf(
-                    "Thread %s is ready!%n",
+                    "Runner %s is ready!%n",
                     readyMsg.runnerName());
             case RoundCompletedMessage roundCompletedMsg -> System.out.printf(
-                    "Thread %s hat Runde %s nach %sms abgeschlossen!%n",
+                    "Runner %s hat Runde %s nach %sms abgeschlossen!%n",
                     roundCompletedMsg.runnerName(),
                     roundCompletedMsg.roundNumber(),
                     roundCompletedMsg.roundTime());
             case RunnerFinishedMessage runnerFinishedMsg -> System.out.printf(
-                    "Thread %s hat das Rennen als %s. abgeschlossen!%n",
+                    "Runner %s hat das Rennen als %s. abgeschlossen!%n",
                     runnerFinishedMsg.runnerName(),
                     runnerFinishedMsg.position());
         }
