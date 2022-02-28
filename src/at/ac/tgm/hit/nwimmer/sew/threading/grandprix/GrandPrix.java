@@ -13,8 +13,6 @@ import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * Ein Grand Prix zwischen 3 verschiedenen Läufern, über 3 Runden hinweg. Die Läufer müssen in jeder Runde einen
@@ -47,6 +45,7 @@ public class GrandPrix {
     private final MessageDistributionService distributor;
 
     private final CountDownLatch startRunnersLatch;
+    private final CountDownLatch runnersReadyLatch;
 
     private boolean ready;
 
@@ -55,6 +54,7 @@ public class GrandPrix {
         this.distributor = new MessageDistributionService(this.broker);
 
         this.startRunnersLatch = new CountDownLatch(1);
+        this.runnersReadyLatch = new CountDownLatch(runnerCount);
 
         this.ready = false;
     }
@@ -86,7 +86,10 @@ public class GrandPrix {
         final TaskProvider taskProvider = new TaskManager(runnerStateManager, defaultTaskFactories);
 
         for (int i = 0; i < runnerCount; i++) {
-            RunnerThreadFactory.newRunnerThread(this.startRunnersLatch, runnerStateManager, taskProvider).start();
+            RunnerThreadFactory.newRunnerThread(this.startRunnersLatch,
+                    this.runnersReadyLatch,
+                    runnerStateManager,
+                    taskProvider).start();
         }
     }
 
@@ -108,13 +111,13 @@ public class GrandPrix {
 
         this.distributor.start();
 
+        this.startRunnersLatch.countDown();
+
         try {
+            this.runnersReadyLatch.await();
             this.broker.put(new GrandPrixStartMessage(LocalDateTime.now(), runnerCount, roundCount));
         } catch (InterruptedException e) {
             e.printStackTrace();
-            return;
         }
-
-        this.startRunnersLatch.countDown();
     }
 }

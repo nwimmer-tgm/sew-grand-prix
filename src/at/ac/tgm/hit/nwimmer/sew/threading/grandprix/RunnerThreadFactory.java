@@ -12,8 +12,11 @@ public class RunnerThreadFactory {
     private static final ThreadGroup runnerThreadGroup = new ThreadGroup("Runners");
     private static final AtomicInteger currentRunnerCount = new AtomicInteger();
 
-    public static Thread newRunnerThread(final CountDownLatch latch, final EventDispatcher dispatcher, final TaskProvider taskProvider) {
-        final Runner runner = new Runner(latch, dispatcher, taskProvider);
+    public static Thread newRunnerThread(final CountDownLatch startLatch,
+                                         final CountDownLatch readyLatch,
+                                         final EventDispatcher dispatcher,
+                                         final TaskProvider taskProvider) {
+        final Runner runner = new Runner(startLatch, readyLatch, dispatcher, taskProvider);
         return new Thread(runnerThreadGroup, runner, String.valueOf(currentRunnerCount.getAndIncrement()));
     }
 }

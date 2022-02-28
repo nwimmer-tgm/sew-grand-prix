@@ -14,14 +14,19 @@ import java.util.concurrent.CountDownLatch;
  */
 public class Runner implements Runnable {
 
-    private final CountDownLatch latch;
+    private final CountDownLatch startLatch;
+    private final CountDownLatch readyLatch;
+
     private final EventDispatcher updateDispatcher;
     private final TaskProvider taskProvider;
 
-    public Runner(final CountDownLatch latch,
+    public Runner(final CountDownLatch startLatch,
+                  final CountDownLatch readyLatch,
                   final EventDispatcher updateDispatcher,
                   final TaskProvider taskProvider) {
-        this.latch = latch;
+        this.startLatch = startLatch;
+        this.readyLatch = readyLatch;
+
         this.updateDispatcher = updateDispatcher;
         this.taskProvider = taskProvider;
     }
@@ -31,9 +36,10 @@ public class Runner implements Runnable {
         final String name = Thread.currentThread().getName();
 
         try {
-            latch.await();
+            startLatch.await();
 
             updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.READY, -1));
+            readyLatch.countDown();
 
             while (true) {
                 final ComputationTask task = this.taskProvider.retrieveNextTask(name);
