@@ -80,7 +80,7 @@ public class RunnerStateManager implements EventDispatcher, RunnerRoundRetriever
 
         this.messageConsumer.put(new RoundCompletedMessage(runnerName, currentRound.intValue(), timeBetweenUpdates));
 
-        if (currentRound.incrementAndGet() == GrandPrix.roundCount) {
+        if (currentRound.incrementAndGet() > GrandPrix.roundCount) {
             final int currentRunnersFinished = this.runnersFinished.incrementAndGet();
 
             this.messageConsumer.put(new RunnerFinishedMessage(runnerName, currentRunnersFinished));

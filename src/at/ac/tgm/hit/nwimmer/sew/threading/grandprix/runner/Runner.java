@@ -1,6 +1,7 @@
 package at.ac.tgm.hit.nwimmer.sew.threading.grandprix.runner;
 
-import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.SleepTimeProvider;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.ComputationTask;
+import at.ac.tgm.hit.nwimmer.sew.threading.grandprix.tasks.TaskProvider;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -15,14 +16,14 @@ public class Runner implements Runnable {
 
     private final CountDownLatch latch;
     private final EventDispatcher updateDispatcher;
-    private final SleepTimeProvider sleepTimeProvider;
+    private final TaskProvider taskProvider;
 
     public Runner(final CountDownLatch latch,
                   final EventDispatcher updateDispatcher,
-                  final SleepTimeProvider sleepTimeProvider) {
+                  final TaskProvider taskProvider) {
         this.latch = latch;
         this.updateDispatcher = updateDispatcher;
-        this.sleepTimeProvider = sleepTimeProvider;
+        this.taskProvider = taskProvider;
     }
 
     @Override
@@ -35,14 +36,15 @@ public class Runner implements Runnable {
             updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.READY, -1));
 
             while (true) {
-                final int sleepTime = this.sleepTimeProvider.retrieveNextSleepTime(name);
+                final ComputationTask task = this.taskProvider.retrieveNextTask(name);
 
-                if (sleepTime < 0) {
+                if (task == null) {
+                    // request to stop execution
                     break;
                 }
 
                 final long time = System.currentTimeMillis();
-                Thread.sleep(sleepTime);
+                task.run();
                 updateDispatcher.dispatch(name, new RunnerEvent(RunnerEvent.EventType.ROUND_COMPLETED, System.currentTimeMillis() - time));
             }
         } catch (InterruptedException e) {
